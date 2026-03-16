@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  {% if is_development %}
+    <link rel="stylesheet" href="http://localhost:5173/core/static/src/styles/main.css">
+  {% endif %}
+</head>
+<body>
+  <a href="{% url "index" %}">Home</a>
+  <main>
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  {% if is_development %}
+    <script type="module" src="http://localhost:5173/core/static/src/js/main.js"></script>
+  {% endif %}
+</body>
+</html>
