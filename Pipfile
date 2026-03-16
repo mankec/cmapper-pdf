@@ -9,6 +9,7 @@ django-extensions = "*"
 ipython = "*"
 environs = {extras = ["django"], version = "*"}
 psycopg = {extras = ["binary"], version = "*"}
+pymupdf = "*"
 
 [dev-packages]
 
