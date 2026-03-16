@@ -10,6 +10,7 @@ ipython = "*"
 environs = {extras = ["django"], version = "*"}
 psycopg = {extras = ["binary"], version = "*"}
 pymupdf = "*"
+pikepdf = "*"
 
 [dev-packages]
 
