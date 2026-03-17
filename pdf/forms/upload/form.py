@@ -10,7 +10,8 @@ class UploadPdfForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={
                 "accept": "application/pdf",
-                "onchange": "form.submit()"
+                "onchange": "form.submit()",
+                "class": "file-input",
             }
         ),
         validators=[

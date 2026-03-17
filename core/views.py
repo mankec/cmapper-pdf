@@ -1,6 +1,0 @@
-from django.shortcuts import render
-
-
-def index(request):
-    ctx = {}
-    return render(request, "core/index.html", ctx)
