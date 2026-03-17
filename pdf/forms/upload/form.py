@@ -11,7 +11,7 @@ class UploadPdfForm(forms.Form):
             attrs={
                 "accept": "application/pdf",
                 "onchange": "form.submit()",
-                "class": "file-input",
+                "class": "file-input file-input-xl",
             }
         ),
         validators=[

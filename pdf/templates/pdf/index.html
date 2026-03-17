@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1 class="text-red-500">Hiii</h1>
   <form
     action="{% url "pdf:upload" %}"
     method="POST"
     enctype="multipart/form-data"
+    class="h-screen flex justify-center items-center"
   >
     {% csrf_token %}
     <div>

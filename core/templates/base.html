@@ -9,7 +9,9 @@
   {% endif %}
 </head>
 <body>
-  <a href="{% url "index" %}">Home</a>
+  <nav class="absolute top-6 left-6">
+    <a href="{% url "index" %}" class="text-red-300 text-xl">Cmapper PDF</a>
+  </nav>
   <main>
     {% block content %}
     {% endblock %}
