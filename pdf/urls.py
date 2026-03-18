@@ -5,7 +5,6 @@ from . import views
 
 app_name = "pdf"
 urlpatterns = [
-    path("", views.index, name="index"),
     path("upload/", views.upload, name="upload"),
-    path("preview/", views.preview, name="preview"),
+    path("page/<int:pno>/", views.page, name="page"),
 ]

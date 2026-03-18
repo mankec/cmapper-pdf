@@ -45,6 +45,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'pdf.apps.PdfConfig',
+    'core.apps.CoreConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
