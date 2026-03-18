@@ -1,0 +1,67 @@
+name: GitHub Actions
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: project.settings
+      POSTGRES_DB: cmapper_pdf_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/cmapper_pdf_test
+
+    services:
+      postgres:
+        image: postgres:16.9
+        env:
+          POSTGRES_DB: cmapper_pdf_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+
+      - name: Set up Bun
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.9'
+
+      - name: Install Pipenv
+        run: pip install pipenv
+
+      - name: Install Python dependencies
+        run: pipenv install
+
+      - name: Install JavaScript dependencies
+        run: bun ci
+
+      - name: Build assets
+        run: bunx vite build
+
+      - name: Perform sanity check
+        run: DJANGO_ENV=test pipenv run python manage.py test --tag=sanity_check
+
+      - name: Run Django tests
+        run: |
+          pipenv run python manage.py migrate
+          DJANGO_ENV=test pipenv run python manage.py test --verbosity 3 --exclude-tag=sanity_check
