@@ -11,6 +11,7 @@ environs = {extras = ["django"], version = "*"}
 psycopg = {extras = ["binary"], version = "*"}
 pymupdf = "*"
 pikepdf = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 
