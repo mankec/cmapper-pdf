@@ -41,10 +41,10 @@ class CmapperIntegrationTestCase(TestCase):
 
             expected_blocks_len = 3
             self.assertEqual(
-                expected_blocks_len, len(first_page.get_text(Cmapper.DEFAULT_TEXT_FORMAT))
+                expected_blocks_len, len(first_page.get_text(Cmapper.TEXT_FORMAT_BLOCKS))
             )
             self.assertEqual(
-                expected_blocks_len, len(second_page.get_text(Cmapper.DEFAULT_TEXT_FORMAT))
+                expected_blocks_len, len(second_page.get_text(Cmapper.TEXT_FORMAT_BLOCKS))
             )
 
             pdf.saveIncr()
@@ -87,7 +87,7 @@ class CmapperIntegrationTestCase(TestCase):
 
             expected_blocks_len = 3
             self.assertEqual(
-                expected_blocks_len, len(first_page.get_text(Cmapper.DEFAULT_TEXT_FORMAT))
+                expected_blocks_len, len(first_page.get_text(Cmapper.TEXT_FORMAT_BLOCKS))
             )
 
             pdf.saveIncr()
