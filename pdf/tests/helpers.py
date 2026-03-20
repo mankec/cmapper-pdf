@@ -1,3 +1,4 @@
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -6,7 +7,8 @@ from pymupdf import Document, Page
 from django.core.files import File
 from django.contrib.sessions.backends.base import SessionBase
 
-from pdf.helpers import uploaded_pdf_path, save_pdf_to_storage
+from project.settings import TMPDIR
+from pdf.helpers import save_pdf_to_storage
 from pdf.constants import PDF_EXT
 
 
@@ -22,10 +24,11 @@ def write_pdf(page: Page, text: str, x: int = 10, y: int = 10) -> None:
     page.insert_text([x, y], text)
 
 
-def remove_pdf(name: str) -> None:
-    Path(
-        uploaded_pdf_path(name)
-    ).unlink()
+def remove_tmpdir() -> None:
+    try:
+        shutil.rmtree(TMPDIR)
+    except FileNotFoundError:
+        pass
 
 
 def upload_pdf_without_form(session: SessionBase, page_blocks: list) -> Document:

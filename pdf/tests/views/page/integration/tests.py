@@ -4,12 +4,15 @@ from bs4 import BeautifulSoup
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from pdf.tests.helpers import remove_pdf, upload_pdf_without_form
+from pdf.tests.helpers import remove_tmpdir, upload_pdf_without_form
 from pdf.services import Cmapper
 
 class PdfPageViewIntegrationTestCase(TestCase):
     def setUp(self):
         self.client = Client()
+
+    def tearDown(self):
+        remove_tmpdir()
 
     def test_word_in_url_is_same_as_one_in_text(self):
         page_blocks = [
@@ -29,5 +32,3 @@ class PdfPageViewIntegrationTestCase(TestCase):
 
         response = self.client.get(remap_url)
         self.assertEqual(HTTPStatus.OK.value, response.status_code)
-
-        remove_pdf(pdf.name)

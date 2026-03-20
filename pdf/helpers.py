@@ -3,7 +3,7 @@ from pathlib import Path
 from django.core.files.base import File, ContentFile
 from django.core.files.storage import default_storage
 
-from project.settings import MEDIA_ROOT
+from project.settings import MEDIA_ROOT, IS_TEST, TMPDIR
 
 
 def clear_user_pdf() -> None:
@@ -16,12 +16,16 @@ def clear_user_pdf() -> None:
 
 def upload_pdf_path(name: str) -> str:
     basename = name.split('/')[-1]
-    return f"user/pdf/{basename}"
+    upload_path = f"user/pdf/{basename}"
+    if IS_TEST:
+        if not Path(TMPDIR).exists():
+            Path.mkdir(TMPDIR)
+        return "tmp/" + upload_path
+    return upload_path
 
 
 def uploaded_pdf_path(name: str) -> str:
-    basename = name.split('/')[-1]
-    return f"{MEDIA_ROOT}/user/pdf/{basename}"
+    return MEDIA_ROOT + upload_pdf_path(name)
 
 
 def save_pdf_to_storage(file: File) -> str:

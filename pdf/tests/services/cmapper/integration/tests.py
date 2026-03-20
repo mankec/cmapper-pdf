@@ -8,13 +8,16 @@ from django.core.files import File
 from pdf.helpers import save_pdf_to_storage
 from pdf.tests.helpers import upload_pdf_without_form
 from pdf.constants import PDF_EXT
-from pdf.tests.helpers import create_pdf, write_pdf, remove_pdf
+from pdf.tests.helpers import create_pdf, write_pdf, remove_tmpdir
 from pdf.services import Cmapper
 
 
 class CmapperIntegrationTestCase(TestCase):
     def setUp(self):
         self.client = Client()
+
+    def tearDown(self):
+        remove_tmpdir()
 
     def test_show_pdf_page_in_blocks(self):
         session = self.client.session
@@ -68,8 +71,6 @@ class CmapperIntegrationTestCase(TestCase):
             result_set = soup.css.select(f"#page-2-block-{n}")
             self.assertFalse(result_set)
 
-        remove_pdf(pdf.name)
-
     def test_page_blocks_are_saved_in_session(self):
         page_blocks = [
             "First block's words",
@@ -100,5 +101,3 @@ class CmapperIntegrationTestCase(TestCase):
         for n in range(0, 3):
             result_set = soup.css.select(f"#page-1-block-{n}")
             self.assertInHTML(str(result_set[0]), html, 1)
-
-        remove_pdf(pdf.name)
