@@ -18,16 +18,16 @@ class CmapperIntegrationTestCase(TestCase):
 
     def test_show_pdf_page_in_blocks(self):
         session = self.client.session
-        first_page_text = {
-            "block_1": "Page one, first block's words",
-            "block_2": "Page one, second block's words",
-            "block_3": "Page one, third block's words",
-        }
-        second_page_text = {
-            "block_1": "Page two, first block's words",
-            "block_2": "Page two, second block's words",
-            "block_3": "Page two, third block's words",
-        }
+        first_page_blocks = [
+            "Page one, first block's words",
+            "Page one, second block's words",
+            "Page one, third block's words",
+        ]
+        second_page_blocks = [
+            "Page two, first block's words",
+            "Page two, second block's words",
+            "Page two, third block's words",
+        ]
 
         with tempfile.NamedTemporaryFile(suffix=f".{PDF_EXT}") as tmpfile:
             pdf = create_pdf(tmpfile.name)
@@ -35,11 +35,11 @@ class CmapperIntegrationTestCase(TestCase):
         pdf.new_page()
         first_page = pdf[0]
         second_page= pdf[1]
-        for n in range(1, 4):
+        for n in range(0, 3):
             x = 10
-            y = n * 20
-            write_pdf(first_page, first_page_text[f"block_{n}"], x, y)
-            write_pdf(second_page, second_page_text[f"block_{n}"], x, y)
+            y = (n + 1) * 20
+            write_pdf(first_page, first_page_blocks[n], x, y)
+            write_pdf(second_page, second_page_blocks[n], x, y)
 
         expected_blocks_len = 3
         self.assertEqual(
