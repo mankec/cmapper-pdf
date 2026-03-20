@@ -148,3 +148,8 @@ MEDIA_URL = "media/"
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 FILE_UPLOAD_MAX_MEMORY_SIZE = 2_621_440 * 20 # 50 MB
+
+
+# Temporary directory
+
+TMPDIR = os.path.join(MEDIA_ROOT, "tmp")
