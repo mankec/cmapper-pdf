@@ -27,11 +27,11 @@ def page(request: HttpRequest, pno: int = Cmapper.DEFAULT_PNO) -> HttpResponse:
     if not uploaded_pdf_path:
         return redirect("/")
     current_pno = session.get("current_pno")
-    text = session.get("page_text")
+    blocks = session.get("page_blocks")
     if pno != current_pno:
         file = default_storage.open(uploaded_pdf_path)
         blocks = Cmapper(file, pno).read()
-        session["page_text"] = text
+        session["page_blocks"] = blocks
         session["current_pno"] = pno
     ctx = {
         "pno": pno,
