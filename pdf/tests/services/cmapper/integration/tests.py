@@ -67,3 +67,50 @@ class CmapperIntegrationTestCase(TestCase):
                 self.assertFalse(result_set)
 
             remove_pdf(pdf.name)
+
+    def test_page_blocks_are_saved_in_session(self):
+        session = self.client.session
+        first_page_text = {
+            "block_1": "Page one, first block's words",
+            "block_2": "Page one, second block's words",
+            "block_3": "Page one, third block's words",
+        }
+
+        with tempfile.NamedTemporaryFile(suffix=f".{PDF_EXT}") as tmpfile:
+            pdf = create_pdf(tmpfile.name)
+            pdf.new_page()
+            first_page = pdf[0]
+            for n in range(1, 4):
+                x = 10
+                y = n * 20
+                write_pdf(first_page, first_page_text[f"block_{n}"], x, y)
+
+            expected_blocks_len = 3
+            self.assertEqual(
+                expected_blocks_len, len(first_page.get_text(Cmapper.DEFAULT_TEXT_FORMAT))
+            )
+
+            pdf.saveIncr()
+            pdf.close()
+
+            file = File(open(pdf.name, "rb"))
+            path = save_pdf_to_storage(file)
+            session["uploaded_pdf_path"] = path
+            session.save()
+
+            url = reverse("pdf:page", kwargs={"pno": 1})
+            response = self.client.get(url)
+            html = response.text
+            soup = BeautifulSoup(html, "html.parser")
+            for n in range(0, 3):
+                result_set = soup.css.select(f"#page-1-block-{n}")
+                self.assertInHTML(str(result_set[0]), html, 1)
+
+            response = self.client.get(url)
+            html = response.text
+            soup = BeautifulSoup(html, "html.parser")
+            for n in range(0, 3):
+                result_set = soup.css.select(f"#page-1-block-{n}")
+                self.assertInHTML(str(result_set[0]), html, 1)
+
+            remove_pdf(pdf.name)
