@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 
+{% load custom_filters %}
+
 {% block content %}
   <div class="text-xl mt-25 mx-8">
     {% for block in blocks %}
       <div id="page-{{ pno }}-block-{{ forloop.counter0 }}" class="mb-8">
         {% for word in block %}
-          <span class="inline-block hover:bg-red-900 cursor-pointer">
-            {{ word }}
-          </span>
+            <a
+              href="{% url "pdf:remap" pno word|pretty %}"
+              class="inline-block hover:bg-red-900 cursor-pointer">
+                {{ word }}
+            </a>
         {% endfor %}
       </div>
     {% endfor %}
