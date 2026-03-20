@@ -21,7 +21,7 @@ def upload(request: HttpRequest) -> HttpResponseRedirect:
     return redirect("/")
 
 
-def page(request: HttpRequest, pno: int = Cmapper.DEFAULT_PNO) -> HttpResponse:
+def page(request: HttpRequest, pno: int) -> HttpResponse:
     session = request.session
     uploaded_pdf_path = session.get("uploaded_pdf_path")
     if not uploaded_pdf_path:
@@ -38,3 +38,7 @@ def page(request: HttpRequest, pno: int = Cmapper.DEFAULT_PNO) -> HttpResponse:
         "blocks": blocks,
     }
     return render(request, "pdf/page.html", ctx)
+
+
+def remap(request: HttpRequest, pno: int, word: str) -> HttpResponse:
+    return render(request, "pdf/remap.html")
