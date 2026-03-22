@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.core.files import File
 
 from pdf.helpers import save_pdf_to_storage
-from pdf.tests.helpers import upload_pdf_without_form
+from pdf.tests.helpers import upload_pdf
 from pdf.constants import PDF_EXT
 from pdf.tests.helpers import create_pdf, write_pdf, remove_tmpdir
 from pdf.services import Cmapper
@@ -77,7 +77,7 @@ class CmapperIntegrationTestCase(TestCase):
             "Second block's words",
             "Third block's words",
         ]
-        pdf = upload_pdf_without_form(self.client.session, page_blocks)
+        upload_pdf(self.client.session, page_blocks)
 
         url = reverse("pdf:page", kwargs={"pno": Cmapper.DEFAULT_PNO})
         response = self.client.get(url)

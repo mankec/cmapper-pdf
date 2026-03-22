@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from pdf.tests.helpers import remove_tmpdir, upload_pdf_without_form
+from pdf.tests.helpers import remove_tmpdir, upload_pdf
 from pdf.services import Cmapper
 
 class PdfPageViewIntegrationTestCase(TestCase):
@@ -21,7 +21,7 @@ class PdfPageViewIntegrationTestCase(TestCase):
             "Third block's words",
         ]
         word = "words"
-        pdf = upload_pdf_without_form(self.client.session, page_blocks)
+        upload_pdf(self.client.session, page_blocks)
         url = reverse("pdf:page", kwargs={"pno": Cmapper.DEFAULT_PNO})
         response = self.client.get(url)
         html = response.text
