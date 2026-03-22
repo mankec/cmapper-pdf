@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from django.core.files.base import File, ContentFile
@@ -7,7 +8,8 @@ from project.settings import MEDIA_ROOT, IS_TEST, TMPDIR
 
 
 def clear_user_pdf() -> None:
-    fd = Path(f"{MEDIA_ROOT}/user/pdf")
+    joined = os.path.join(MEDIA_ROOT, "user", "pdf")
+    fd = Path(joined)
     for file in fd.iterdir():
         if file.name == ".gitkeep":
             continue
@@ -16,16 +18,18 @@ def clear_user_pdf() -> None:
 
 def upload_pdf_path(name: str) -> str:
     basename = name.split('/')[-1]
-    upload_path = f"user/pdf/{basename}"
+    upload_path = os.path.join("user", "pdf", basename)
     if IS_TEST:
         if not Path(TMPDIR).exists():
             Path.mkdir(TMPDIR)
-        return "tmp/" + upload_path
+        return os.path.join("tmp", upload_path)
     return upload_path
 
 
 def uploaded_pdf_path(name: str) -> str:
-    return MEDIA_ROOT + upload_pdf_path(name)
+    return os.path.join(
+        MEDIA_ROOT, upload_pdf_path(name)
+    )
 
 
 def save_pdf_to_storage(file: File) -> str:
