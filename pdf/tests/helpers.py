@@ -31,7 +31,7 @@ def remove_tmpdir() -> None:
         pass
 
 
-def upload_pdf_without_form(session: SessionBase, page_blocks: list) -> Document:
+def upload_pdf(session: SessionBase, page_blocks: list) -> None:
     with tempfile.NamedTemporaryFile(suffix=f".{PDF_EXT}") as tmpfile:
         pdf = create_pdf(tmpfile.name)
 
@@ -49,4 +49,3 @@ def upload_pdf_without_form(session: SessionBase, page_blocks: list) -> Document
     path = save_pdf_to_storage(file)
     session["uploaded_pdf_path"] = path
     session.save()
-    return pdf
