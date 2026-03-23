@@ -16,9 +16,9 @@ class PdfPageViewIntegrationTestCase(TestCase):
 
     def test_word_in_url_is_same_as_one_in_text(self):
         page_blocks = [
-            "First block's words",
-            "Second block's words",
-            "Third block's words",
+            "First block's words \n",
+            "Second block's words \n",
+            "Third block's words \n",
         ]
         word = "words"
         upload_pdf(self.client.session, page_blocks)
