@@ -1,3 +1,2 @@
 from pdf.services.cmapper import Cmapper
-
-__all__ = ["Cmapper"]
+from pdf.services.pdf_page_reader import PdfPageReader

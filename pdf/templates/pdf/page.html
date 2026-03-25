@@ -4,14 +4,15 @@
 
 {% block content %}
   <div class="text-xl mt-25 mx-8">
-    {% for block in blocks %}
+    {% for word_block in word_blocks %}
       <div id="page-{{ pno }}-block-{{ forloop.counter0 }}" class="mb-8">
-        {% for word in block %}
-            <a
-              href="{% url "pdf:remap" pno word|pretty %}"
-              class="inline-block hover:bg-red-900 cursor-pointer">
-                {{ word }}
-            </a>
+        {% for word_dict in word_block %}
+          <a
+            href="{% url "pdf:word" pno word_dict.value %}?font={{ word_dict.font }}"
+            class="inline-block hover:bg-red-900 cursor-pointer"
+          >
+              {{ word_dict.value }}
+          </a>
         {% endfor %}
       </div>
     {% endfor %}
