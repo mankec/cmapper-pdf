@@ -21,7 +21,7 @@ class PdfPage:
         doc = self._open_pdf()
         page = doc.load_page(self.pno)
         exclude_images = pymupdf.TEXTFLAGS_DICT & ~pymupdf.TEXT_PRESERVE_IMAGES
-        page_text = page.get_text(self.TEXT_FORMAT_DICT, flags=exclude_images)
+        page_text = page.get_text("dict", flags=exclude_images)
 
         blocks = []
 
@@ -56,6 +56,14 @@ class PdfPage:
             blocks.append(block_list)
 
         return blocks
+
+    def get_page_text(self) -> str:
+        if isinstance(self.filename_or_stream, str):
+            doc = pymupdf.open(self.filename)
+        else:
+            doc = pymupdf.open(stream=self.filename_or_stream)
+
+        return doc.load_page(self.pno).get_text()
 
     def _open_pdf(self) -> Document:
         if isinstance(self.filename_or_stream, str):
