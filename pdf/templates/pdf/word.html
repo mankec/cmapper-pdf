@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <form
+    action="{% url "pdf:remap" pno word %}"
+    method="POST"
+    class="mb-10"
+  >
+    {% csrf_token %}
+    <div class="flex h-screen items-center justify-center gap-5">
+      {% for mapped in mapped_chars %}
+        <label class="flex flex-col items-center gap-5">
+          <input
+            type="text"
+            name="{{ mapped.char }}"
+            class="input input-xl w-25 rounded-md border border-slate-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+          >
+          <span class="text-lg">{{ mapped.char }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    <button
+      type="submit"
+      class="absolute top-[75vh] left-1/2 -translate-x-1/2 bg-green-900 hover:bg-green-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex justify-center w-1/4"
+    >
+      Remap
+    </button>
+  </form>
+{% endblock %}

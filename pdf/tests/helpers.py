@@ -1,6 +1,6 @@
+import os
 import shutil
 import tempfile
-from pathlib import Path
 
 import pymupdf
 from pymupdf import Document, Page
@@ -10,6 +10,9 @@ from django.contrib.sessions.backends.base import SessionBase
 from project.settings import TMPDIR
 from pdf.helpers import save_pdf_to_storage
 from pdf.constants import PDF_EXT
+
+
+PDF_SAMPLE_JIBBERISH_ON_READ =  os.path.join("pdf", "samples", "jibberish-on-read.pdf")
 
 
 def create_pdf(name: str) -> Document:
