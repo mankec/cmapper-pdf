@@ -27,18 +27,18 @@ def page(request: HttpRequest, pno: int) -> HttpResponse:
     if not uploaded_pdf_path:
         return redirect("/")
     current_pno = session.get("current_pno")
-    blocks = session.get("page_blocks")
+    word_blocks = session.get("word_blocks")
     if pno != current_pno:
         file = default_storage.open(uploaded_pdf_path)
-        blocks = Cmapper(file, pno).get_page_blocks()
-        session["page_blocks"] = blocks
+        word_blocks = Cmapper(file, pno).get_word_blocks()
+        session["word_blocks"] = word_blocks
         session["current_pno"] = pno
     ctx = {
         "pno": pno,
-        "blocks": blocks,
+        "word_blocks": word_blocks,
     }
     return render(request, "pdf/page.html", ctx)
 
 
-def remap(request: HttpRequest, pno: int, word: str) -> HttpResponse:
-    return render(request, "pdf/remap.html")
+def word(request: HttpRequest, pno: int, word: str) -> HttpResponse:
+    pass
