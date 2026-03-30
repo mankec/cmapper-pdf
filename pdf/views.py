@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 
 from pdf.forms.upload.form import UploadPdfForm
-from pdf.services import Cmapper
+from pdf.services import PdfPage
 from pdf.helpers import save_pdf_to_storage
 
 
@@ -16,7 +16,7 @@ def upload(request: HttpRequest) -> HttpResponseRedirect:
         file = request.FILES["file"]
         path = save_pdf_to_storage(file)
         session["uploaded_pdf_path"] = path
-        url = reverse("pdf:page", kwargs={"pno": Cmapper.DEFAULT_PNO})
+        url = reverse("pdf:page", kwargs={"pno": PdfPage.DEFAULT_PNO})
         return redirect(url)
     return redirect("/")
 
@@ -30,7 +30,7 @@ def page(request: HttpRequest, pno: int) -> HttpResponse:
     word_blocks = session.get("word_blocks")
     if pno != current_pno:
         file = default_storage.open(uploaded_pdf_path)
-        word_blocks = Cmapper(file, pno).get_word_blocks()
+        word_blocks = PdfPage(file, pno).get_word_blocks()
         session["word_blocks"] = word_blocks
         session["current_pno"] = pno
     ctx = {
