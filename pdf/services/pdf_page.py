@@ -1,21 +1,24 @@
+from pathlib import Path
+
 import pymupdf
-from django.core.files import File
+from pymupdf import Document
 
 from pdf.constants import SOFT_HYPHEN_HEX_ESCAPE
+from pdf.helpers import uploaded_pdf_path
 
 
 class PdfPage:
     DEFAULT_PNO = 1
     TEXT_FORMAT_DICT = "dict"
 
-    def __init__(self, file: File, pno: str | int) -> None:
-        self.file = file
+    def __init__(self, filename_or_stream: str | bytes, pno: str | int) -> None:
+        self.filename_or_stream = filename_or_stream
 
         # Convert to proper number since first number is 1 instead of 0, because of UX
         self.pno = int(pno) - 1
 
     def get_word_blocks(self) -> list[list[dict[str, str]]]:
-        doc = pymupdf.open(self.file)
+        doc = self._open_pdf()
         page = doc.load_page(self.pno)
         exclude_images = pymupdf.TEXTFLAGS_DICT & ~pymupdf.TEXT_PRESERVE_IMAGES
         page_text = page.get_text(self.TEXT_FORMAT_DICT, flags=exclude_images)
@@ -53,3 +56,15 @@ class PdfPage:
             blocks.append(block_list)
 
         return blocks
+
+    def _open_pdf(self) -> Document:
+        if isinstance(self.filename_or_stream, str):
+            if Path(self.filename_or_stream).exists():
+                doc = pymupdf.open(self.filename_or_stream)
+            else:
+                filename = uploaded_pdf_path(self.filename_or_stream)
+                doc = pymupdf.open(filename)
+        else:
+            doc = pymupdf.open(stream=self.filename_or_stream)
+
+        return doc
