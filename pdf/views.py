@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 
@@ -29,8 +28,7 @@ def page(request: HttpRequest, pno: int) -> HttpResponse:
     current_pno = session.get("current_pno")
     word_blocks = session.get("word_blocks")
     if pno != current_pno:
-        file = default_storage.open(uploaded_pdf_path)
-        word_blocks = PdfPage(file, pno).get_word_blocks()
+        word_blocks = PdfPage(uploaded_pdf_path, pno).get_word_blocks()
         session["word_blocks"] = word_blocks
         session["current_pno"] = pno
     ctx = {
