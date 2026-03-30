@@ -4,7 +4,7 @@ from django.core.files import File
 from pdf.constants import SOFT_HYPHEN_HEX_ESCAPE
 
 
-class Cmapper:
+class PdfPage:
     DEFAULT_PNO = 1
     TEXT_FORMAT_DICT = "dict"
 
