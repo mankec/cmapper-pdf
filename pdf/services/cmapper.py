@@ -4,12 +4,13 @@ import re
 import math
 from concurrent.futures import ProcessPoolExecutor
 
-import pikepdf
 from pikepdf import Pdf
 from pikepdf import Object
 
 from pdf.services.pdf_page import PdfPage
 from pdf.helpers import to_char, to_unicode, chunked_list, uploaded_pdf_path
+from pdf.factories import PdfLib, PdfLibFactory
+from pdf.libs import PikepdfLib
 
 
 class Cmapper:
@@ -21,8 +22,9 @@ class Cmapper:
         self.page = PdfPage(filename, pno)
 
     def extract_mapped_chars(self, word: str, font_name: str | None) -> list[dict[str, str]]:
-        pdf = pikepdf.open(self.filename, allow_overwriting_input=True)
-        page = pdf.pages[self.pno]
+        pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
+        pdf = pdflib.open(self.filename, allow_overwriting_input=True)
+        page = pdflib.get_page(self.pno)
         fonts = page.Resources.Font
 
         font = next(
@@ -177,7 +179,8 @@ class _Extractor():
 
 class _ExtractorPickle:
     def __init__(self, extractor: _Extractor, pdf_stream: bytes, word: str):
-        pdf = pikepdf.open(io.BytesIO(pdf_stream))
+        pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
+        pdf = pdflib.open(io.BytesIO(pdf_stream))
         buf = io.BytesIO()
         pdf.save(buf)
 
@@ -215,15 +218,16 @@ class _ExtractorPickle:
         return self.word not in text
 
     def get_updated_page_text(self, lines: list[str]) -> str:
-        with pikepdf.open(io.BytesIO(self.pdf_stream)) as pdf:
-            cmap = "\n".join(lines)
-            data = cmap.encode()
-            stream = pdf.make_stream(data)
-            page = pdf.pages[self.pno]
-            fonts = page.Resources.Font
-            fonts[self.font].ToUnicode = stream
-            buf = io.BytesIO()
-            pdf.save(buf, linearize=False)
-            updated_pdf_stream = buf.getvalue()
+        pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
+        pdf = pdflib.open(io.BytesIO(self.pdf_stream))
+        cmap = "\n".join(lines)
+        data = cmap.encode()
+        stream = pdf.make_stream(data)
+        page = pdflib.get_page(self.pno)
+        fonts = page.Resources.Font
+        fonts[self.font].ToUnicode = stream
+        buf = io.BytesIO()
+        pdf.save(buf, linearize=False)
+        updated_pdf_stream = buf.getvalue()
 
-            return PdfPage(updated_pdf_stream, self.pno).get_page_text()
+        return PdfPage(updated_pdf_stream, self.pno).get_page_text()
