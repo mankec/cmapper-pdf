@@ -1,10 +1,8 @@
-from pathlib import Path
-
 import pymupdf
-from pymupdf import Document
 
 from pdf.constants import SOFT_HYPHEN_HEX_ESCAPE
-from pdf.helpers import uploaded_pdf_path
+from pdf.factories import PdfLib, PdfLibFactory
+from pdf.libs import PymupdfLib
 
 
 class PdfPage:
@@ -13,13 +11,12 @@ class PdfPage:
 
     def __init__(self, filename_or_stream: str | bytes, pno: str | int) -> None:
         self.filename_or_stream = filename_or_stream
-
-        # Convert to proper number since first number is 1 instead of 0, because of UX
-        self.pno = int(pno) - 1
+        self.pno = pno
 
     def get_word_blocks(self) -> list[list[dict[str, str]]]:
-        doc = self._open_pdf()
-        page = doc.load_page(self.pno)
+        pdflib: PymupdfLib = PdfLibFactory(PdfLib.PYMUPDF)
+        pdflib.open(self.filename_or_stream)
+        page = pdflib.get_page(self.pno)
         exclude_images = pymupdf.TEXTFLAGS_DICT & ~pymupdf.TEXT_PRESERVE_IMAGES
         page_text = page.get_text("dict", flags=exclude_images)
 
@@ -58,21 +55,8 @@ class PdfPage:
         return blocks
 
     def get_page_text(self) -> str:
-        if isinstance(self.filename_or_stream, str):
-            doc = pymupdf.open(self.filename)
-        else:
-            doc = pymupdf.open(stream=self.filename_or_stream)
+        pdflib: PymupdfLib = PdfLibFactory(PdfLib.PYMUPDF)
+        pdflib.open(self.filename_or_stream)
+        page = pdflib.get_page(self.pno)
 
-        return doc.load_page(self.pno).get_text()
-
-    def _open_pdf(self) -> Document:
-        if isinstance(self.filename_or_stream, str):
-            if Path(self.filename_or_stream).exists():
-                doc = pymupdf.open(self.filename_or_stream)
-            else:
-                filename = uploaded_pdf_path(self.filename_or_stream)
-                doc = pymupdf.open(filename)
-        else:
-            doc = pymupdf.open(stream=self.filename_or_stream)
-
-        return doc
+        return page.get_text()
