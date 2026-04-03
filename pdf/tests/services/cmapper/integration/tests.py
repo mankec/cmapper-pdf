@@ -5,7 +5,7 @@ from django.core.files import File
 
 from pdf.helpers import save_pdf_to_storage
 from pdf.tests.helpers import remove_tmpdir, PDF_SAMPLE_JIBBERISH_ON_READ
-from pdf.services import PdfPage
+from pdf.constants import DEFAULT_PNO
 
 
 class CmapperIntegrationTestCase(TestCase):
@@ -23,7 +23,7 @@ class CmapperIntegrationTestCase(TestCase):
 
     def test_single_unicode_codepoints(self):
         word = "ошворени"
-        url = reverse("pdf:word", kwargs={"pno": PdfPage.DEFAULT_PNO, "word": word})
+        url = reverse("pdf:word", kwargs={"pno": DEFAULT_PNO, "word": word})
         url = f"{url}?font={self.font}"
         response = self.client.get(url)
         soup = BeautifulSoup(response.text, "html.parser")
@@ -41,7 +41,7 @@ class CmapperIntegrationTestCase(TestCase):
 
     def test_multiple_unicode_codepoints(self):
         word = "ca.мof.nacHUK"
-        url = reverse("pdf:word", kwargs={"pno": PdfPage.DEFAULT_PNO, "word": word})
+        url = reverse("pdf:word", kwargs={"pno": DEFAULT_PNO, "word": word})
         url = f"{url}?font={self.font}"
         response = self.client.get(url)
         soup = BeautifulSoup(response.text, "html.parser")

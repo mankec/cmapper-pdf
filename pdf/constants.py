@@ -1,3 +1,7 @@
 PDF_EXT = "pdf"
 
 SOFT_HYPHEN_HEX_ESCAPE = "\xad"
+
+DEFAULT_PNO = 1
+
+TEXT_FORMAT_DICT = "dict"

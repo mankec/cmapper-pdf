@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from pdf.constants import PDF_EXT
 from pdf.tests.helpers import create_pdf, remove_tmpdir
-from pdf.services import PdfPage
+from pdf.constants import DEFAULT_PNO
 
 
 class UploadPdfFormIntegrationTestCase(TestCase):
@@ -21,7 +21,7 @@ class UploadPdfFormIntegrationTestCase(TestCase):
 
             with open(tmpfile.name, "rb") as pdf:
                 url = reverse("pdf:upload")
-                redirect_url = reverse("pdf:page", kwargs={"pno": PdfPage.DEFAULT_PNO})
+                redirect_url = reverse("pdf:page", kwargs={"pno": DEFAULT_PNO})
                 response = self.client.post(url, {"file": pdf})
                 self.assertRedirects(response, redirect_url)
 
