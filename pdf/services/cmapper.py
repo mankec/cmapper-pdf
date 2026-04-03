@@ -5,25 +5,24 @@ import math
 from concurrent.futures import ProcessPoolExecutor
 
 from pikepdf import Pdf
-from pikepdf import Object
+from pikepdf import Object, Page as PikepdfPage
 
-from pdf.services.pdf_page import PdfPage
-from pdf.helpers import to_char, to_unicode, chunked_list, uploaded_pdf_path
+from pdf.helpers import to_char, to_unicode, chunked_list
 from pdf.factories import PdfLib, PdfLibFactory
 from pdf.libs import PikepdfLib
+from pdf.utils import get_page_text
 
 
 class Cmapper:
-    def __init__(self, filename: str, pno: str | int) -> None:
-        self.filename = uploaded_pdf_path(filename)
+    def __init__(self, filename_or_stream: str | bytes, pno: str | int):
+        self.filename_or_stream = filename_or_stream
+        self.pno = int(pno)
 
-        # Convert to proper number since first number is 1 instead of 0, because of UX
-        self.pno = int(pno) - 1
-        self.page = PdfPage(filename, pno)
-
-    def extract_mapped_chars(self, word: str, font_name: str | None) -> list[dict[str, str]]:
+    def extract_mapped_chars(
+        self, word: str, font_name: str | None
+    ) -> list[dict[str, str]]:
         pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
-        pdf = pdflib.open(self.filename, allow_overwriting_input=True)
+        pdf = pdflib.open(self.filename_or_stream, allow_overwriting_input=True)
         page = pdflib.get_page(self.pno)
         fonts = page.Resources.Font
 
@@ -45,7 +44,7 @@ class Cmapper:
 
         data = font_stream.read_bytes()
         cmap = data.decode()
-        extracted = _Extractor(pdf, self.page, fonts, font, cmap).extract(word)
+        extracted = _Extractor(pdf, self.pno, fonts, font, cmap).extract(word)
         if extracted:
             mapped_chars_dict |= extracted
 
@@ -82,10 +81,10 @@ class _Extractor():
     IGNORE_CHARS = ["."]
 
     def __init__(
-        self, pdf: Pdf, page: PdfPage, fonts: Object, font: str, cmap: str
+        self, pdf: Pdf, pno: int, fonts: Object, font: str, cmap: str
     ) -> None:
         self.pdf = pdf
-        self.page = page
+        self.pno = pno
         self.fonts = fonts
         self.font = font
         self.cmap = cmap
@@ -185,7 +184,7 @@ class _ExtractorPickle:
         pdf.save(buf)
 
         self.pdf_stream = buf.getvalue()
-        self.pno = extractor.page.pno
+        self.pno = extractor.pno
         self.font = extractor.font
         self.word = word
 
@@ -230,4 +229,4 @@ class _ExtractorPickle:
         pdf.save(buf, linearize=False)
         updated_pdf_stream = buf.getvalue()
 
-        return PdfPage(updated_pdf_stream, self.pno).get_page_text()
+        return get_page_text(updated_pdf_stream, self.pno)
