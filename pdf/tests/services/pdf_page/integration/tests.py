@@ -8,7 +8,7 @@ from django.core.files import File
 from pdf.helpers import save_pdf_to_storage
 from pdf.tests.helpers import upload_pdf
 from pdf.tests.helpers import create_pdf, write_pdf, remove_tmpdir
-from pdf.services import PdfPage
+from pdf.constants import TEXT_FORMAT_DICT, DEFAULT_PNO
 
 
 class CmapperIntegrationTestCase(TestCase):
@@ -46,10 +46,10 @@ class CmapperIntegrationTestCase(TestCase):
 
         expected_blocks_len = 3
         self.assertEqual(
-            expected_blocks_len, len(first_page.get_text(PdfPage.TEXT_FORMAT_DICT)["blocks"])
+            expected_blocks_len, len(first_page.get_text(TEXT_FORMAT_DICT)["blocks"])
         )
         self.assertEqual(
-            expected_blocks_len, len(second_page.get_text(PdfPage.TEXT_FORMAT_DICT)["blocks"])
+            expected_blocks_len, len(second_page.get_text(TEXT_FORMAT_DICT)["blocks"])
         )
 
         pdf.saveIncr()
@@ -63,7 +63,7 @@ class CmapperIntegrationTestCase(TestCase):
         session["uploaded_pdf_path"] = path
         session.save()
 
-        url = reverse("pdf:page", kwargs={"pno": PdfPage.DEFAULT_PNO})
+        url = reverse("pdf:page", kwargs={"pno": DEFAULT_PNO})
         response = self.client.get(url)
         html = response.text
         soup = BeautifulSoup(html, "html.parser")
@@ -76,7 +76,7 @@ class CmapperIntegrationTestCase(TestCase):
 
         for sentence in first_page_blocks:
             for word in sentence.split(" "):
-                word_url = reverse("pdf:word", kwargs={"pno": PdfPage.DEFAULT_PNO, "word": word})
+                word_url = reverse("pdf:word", kwargs={"pno": DEFAULT_PNO, "word": word})
                 word_url += f"?font={helvetica}"
                 link = soup.find(href=word_url)
                 self.assertInHTML(str(link), html, first_page_text.count(word))
@@ -89,7 +89,7 @@ class CmapperIntegrationTestCase(TestCase):
         ]
         upload_pdf(self.client.session, page_blocks)
 
-        url = reverse("pdf:page", kwargs={"pno": PdfPage.DEFAULT_PNO})
+        url = reverse("pdf:page", kwargs={"pno": DEFAULT_PNO})
         response = self.client.get(url)
         html = response.text
         soup = BeautifulSoup(html, "html.parser")
@@ -104,7 +104,7 @@ class CmapperIntegrationTestCase(TestCase):
             result_set = soup.css.select(f"#page-1-block-{i}")
             self.assertInHTML(str(result_set[0]), html, 1)
 
-        url = reverse("pdf:page", kwargs={"pno": PdfPage.DEFAULT_PNO})
+        url = reverse("pdf:page", kwargs={"pno": DEFAULT_PNO})
         response = self.client.get(url)
         html = response.text
         soup = BeautifulSoup(html, "html.parser")
