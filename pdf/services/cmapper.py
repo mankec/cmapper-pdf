@@ -17,13 +17,14 @@ class Cmapper:
         self.filename_or_stream = filename_or_stream
         self.pno = int(pno)
 
+        pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
+        self.pdf = pdflib.open(self.filename_or_stream, allow_overwriting_input=True)
+        self.page = pdflib.get_page(self.pno)
+
     def extract_mapped_chars(
         self, word: str, font_name: str | None
     ) -> list[dict[str, str]]:
-        pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
-        pdf = pdflib.open(self.filename_or_stream, allow_overwriting_input=True)
-        page = pdflib.get_page(self.pno)
-        fonts = page.Resources.Font
+        fonts = self.page.Resources.Font
 
         font = next(
             (
@@ -43,7 +44,7 @@ class Cmapper:
 
         data = font_stream.read_bytes()
         cmap = data.decode()
-        extracted = _Extractor(pdf, self.pno, fonts, font, cmap).extract(word)
+        extracted = _Extractor(self.pdf, self.pno, fonts, font, cmap).extract(word)
         if extracted:
             mapped_chars_dict |= extracted
 
@@ -74,11 +75,24 @@ class Cmapper:
 
         return mapped_chars_list
 
+    def remap(self, remap_chars: dict[str, str], font_name: str) -> None:
+        fonts = self.page.Resources.Font
 
-class _Extractor():
-    SINGLE_UNICODE_LENGTH = 4
-    IGNORE_CHARS = ["."]
+        font = next(
+            (
+                font for font in fonts
+                if str(fonts[font].DescendantFonts[0].BaseFont).lstrip("/") == font_name
+            ), None
+        )
 
+        font_stream = fonts[font].get("/ToUnicode")
+        data = font_stream.read_bytes()
+        cmap = data.decode()
+
+        _Remapper(self.pdf, self.pno, fonts, font, cmap).remap(remap_chars)
+
+
+class _Cmapper():
     def __init__(
         self, pdf: Pdf, pno: int, fonts: Object, font: str, cmap: str
     ) -> None:
@@ -94,6 +108,30 @@ class _Extractor():
         stream = self.pdf.make_stream(data)
         self.fonts[self.font].ToUnicode = stream
         self.pdf.save(self.pdf.filename, linearize=False)
+
+
+class _Remapper(_Cmapper):
+    def remap(self, remap_chars: dict[str, str]):
+        lines = self.cmap.splitlines()
+
+        for idx, line in enumerate(lines):
+            if not line.startswith("<"):
+                continue
+
+            glyph_id = line.split(" ")[0].strip("<>")
+
+            new_char = remap_chars.get(glyph_id)
+            if new_char:
+                new_map = f"<{glyph_id}> <{"".join([to_unicode(char) for char in new_char])}>"
+                lines.pop(idx)
+                lines.insert(idx, new_map)
+
+        self.update_cmap(lines)
+
+
+class _Extractor(_Cmapper):
+    SINGLE_UNICODE_LENGTH = 4
+    IGNORE_CHARS = ["."]
 
     def extract(self, word: str) -> dict[str, str] | None:
         baselines = self.cmap.splitlines()
