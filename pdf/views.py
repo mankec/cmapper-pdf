@@ -25,7 +25,7 @@ def upload(request: HttpRequest) -> HttpResponseRedirect:
 def page(request: HttpRequest, pno: int) -> HttpResponse:
     session = request.session
 
-    session.delete("mapped_chars")
+    session.pop("mapped_chars", None)
 
     uploaded_pdf_path = session.get("uploaded_pdf_path")
     if not uploaded_pdf_path:
@@ -49,6 +49,7 @@ def word(request: HttpRequest, pno: int, word: str) -> HttpResponse:
     if not uploaded_pdf_path:
         return redirect("/")
     font = request.GET.get("font")
+    session["word_font"] = font
     mapped_chars = session.get("mapped_chars")
     if not mapped_chars:
         mapped_chars = Cmapper(uploaded_pdf_path, pno).extract_mapped_chars(word, font)
@@ -61,6 +62,19 @@ def word(request: HttpRequest, pno: int, word: str) -> HttpResponse:
     }
     return render(request, "pdf/word.html", ctx)
 
-
+# Word param isn't used but is necessary for URL structure
 def remap(request: HttpRequest, pno: int, word: str) -> HttpResponseRedirect:
-    pass
+    session = request.session
+    uploaded_pdf_path = session.get("uploaded_pdf_path")
+    if not uploaded_pdf_path:
+        return redirect("/")
+    font = session["word_font"]
+    remap_chars = {
+        k: v for k, v in request.POST.items()
+        if k != "csrfmiddlewaretoken"
+    }
+    Cmapper(uploaded_pdf_path, pno).remap(remap_chars, font)
+    session["word_blocks"] = get_word_blocks(uploaded_pdf_path, pno)
+    pno = session["current_pno"]
+    url = reverse("pdf:page", kwargs={"pno": pno})
+    return redirect(url)
