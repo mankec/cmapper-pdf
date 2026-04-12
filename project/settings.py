@@ -44,6 +44,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'user.apps.UserConfig',
     'pdf.apps.PdfConfig',
     'core.apps.CoreConfig',
     'django.contrib.admin',
@@ -118,6 +119,11 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+# Custom user
+
+AUTH_USER_MODEL = "user.CustomUser"
 
 
 # Internationalization
