@@ -3,3 +3,6 @@ export POSTGRES_PORT=5432
 export POSTGRES_DB="db_name"
 export POSTGRES_USER="admin"
 export POSTGRES_PASSWORD="password"
+
+export GOOGLE_OAUTH_CLIENT_ID="get_from_google_auth_platform"
+export GOOGLE_OAUTH_CLIENT_SECRET="get_from_google_auth_platform"
