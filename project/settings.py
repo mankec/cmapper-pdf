@@ -54,6 +54,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -64,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'project.urls'
@@ -82,6 +87,11 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    # `allauth` specific authentication methods, such as login by email
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 WSGI_APPLICATION = 'project.wsgi.application'
@@ -159,3 +169,32 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 2_621_440 * 20 # 50 MB
 # Temporary directory
 
 TMPDIR = os.path.join(MEDIA_ROOT, "tmp")
+
+
+# Social account providers
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': env.str("GOOGLE_OAUTH_CLIENT_ID", default=None),
+            'secret': env.str("GOOGLE_OAUTH_CLIENT_SECRET", default=None),
+            'key': ''
+        },
+        'SCOPE': [
+            'email',
+        ],
+    }
+}
+
+# User cannot post images so this is safe to use
+# https://code.djangoproject.com/ticket/15619#comment:4
+ACCOUNT_LOGOUT_ON_GET = True
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'email'
+
+SOCIALACCOUNT_ONLY = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"

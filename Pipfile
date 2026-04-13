@@ -12,6 +12,7 @@ psycopg = {extras = ["binary"], version = "*"}
 pymupdf = "*"
 pikepdf = "*"
 beautifulsoup4 = "*"
+django-allauth = {extras = ["socialaccount"], version = "*"}
 
 [dev-packages]
 
