@@ -3,20 +3,24 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.files import File
 
-from pdf.helpers import save_pdf_to_storage
-from pdf.tests.helpers import remove_tmpdir, PDF_SAMPLE_JIBBERISH_ON_READ
+from pdf.tests.helpers import remove_tmpdir, PDF_SAMPLE_JIBBERISH_ON_READ, get_test_user
 from pdf.constants import DEFAULT_PNO
+from pdf.models import Pdf
+from pdf.tests.helpers import stub_request_user
 
 
 class CmapperIntegrationTestCase(TestCase):
+    fixtures = ["users.json"]
+
     def setUp(self):
-        # This font corresponds to /C0_4 font in 'jibberish-on-read.pdf', page 1
+        # This font corresponds to /C0_4 font in '  -on-read.pdf', page 1
         self.font = "Fd3376094"
         self.client = Client()
-        session = self.client.session
         file = File(open(PDF_SAMPLE_JIBBERISH_ON_READ, "rb"))
-        session["uploaded_pdf_path"] = save_pdf_to_storage(file)
-        session.save()
+        pdf = Pdf.objects.create(file=file)
+        self.user = get_test_user()
+        self.user.pdf = pdf
+        self.user.save()
 
     def tearDown(self):
         remove_tmpdir()
@@ -25,7 +29,10 @@ class CmapperIntegrationTestCase(TestCase):
         word = "ошворени"
         url = reverse("pdf:word", kwargs={"pno": DEFAULT_PNO, "word": word})
         url = f"{url}?font={self.font}"
-        response = self.client.get(url)
+
+        with stub_request_user(self.user):
+            response = self.client.get(url)
+
         soup = BeautifulSoup(response.text, "html.parser")
         word_list = list(word)
         mapped_chars = [
@@ -43,12 +50,14 @@ class CmapperIntegrationTestCase(TestCase):
             self.assertEqual(len(char_inputs), count)
             self.assertEqual(len(char_spans), count)
 
-
     def test_multiple_unicode_codepoints(self):
         word = "ca.мof.nacHUK"
         url = reverse("pdf:word", kwargs={"pno": DEFAULT_PNO, "word": word})
         url = f"{url}?font={self.font}"
-        response = self.client.get(url)
+
+        with stub_request_user(self.user):
+            response = self.client.get(url)
+
         soup = BeautifulSoup(response.text, "html.parser")
         word_list = ["c", "a.м", "o", "f.n", "a", 'c', 'H', 'U', 'K']
 
@@ -78,14 +87,17 @@ class CmapperIntegrationTestCase(TestCase):
         valid = "самогласник"
 
         url = reverse("pdf:page", kwargs={"pno": DEFAULT_PNO})
-        response = self.client.get(url)
-        self.assertEqual(response.text.count(invalid), count)
-        self.assertEqual(response.text.count(valid), 0)
 
-        remapped = {
-            '058D': 'с', '056F': 'ам', '07D2': 'о', '05F1': 'гл', '0549': 'а', '046A': 'н', '04E9': 'и', '04A4': 'к'
-        }
-        url = reverse("pdf:remap", kwargs={"pno": DEFAULT_PNO, "word": invalid})
-        response = self.client.post(url, remapped, follow=True)
-        self.assertEqual(response.text.count(valid), count)
-        self.assertEqual(response.text.count(invalid), 0)
+        with stub_request_user(self.user):
+            response = self.client.get(url)
+
+            self.assertEqual(response.text.count(invalid), count)
+            self.assertEqual(response.text.count(valid), 0)
+
+            remapped = {
+                '058D': 'с', '056F': 'ам', '07D2': 'о', '05F1': 'гл', '0549': 'а', '046A': 'н', '04E9': 'и', '04A4': 'к'
+            }
+            url = reverse("pdf:remap", kwargs={"pno": DEFAULT_PNO, "word": invalid})
+            response = self.client.post(url, remapped, follow=True)
+            self.assertEqual(response.text.count(valid), count)
+            self.assertEqual(response.text.count(invalid), 0)

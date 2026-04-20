@@ -11,6 +11,8 @@ env = Env()
 
 def index(request: HttpRequest) -> HttpResponse:
     request.session.pop("uploaded_pdf_path", None)
+    request.session.pop("current_pno", None)
+    request.session.pop("word_blocks", None)
     if not IS_PRODUCTION:
         clear_user_pdf()
 

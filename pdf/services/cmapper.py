@@ -4,12 +4,12 @@ import re
 import math
 from concurrent.futures import ProcessPoolExecutor
 
-from pikepdf import Pdf, Object
+from pikepdf import Pdf as PikepdfDocument, Object
 
 from pdf.helpers import to_char, to_unicode, chunked_list
 from pdf.factories import PdfLib, PdfLibFactory
 from pdf.libs import PikepdfLib
-from pdf.utils import get_page_text
+from pdf.helpers import get_page_text
 
 
 class Cmapper:
@@ -88,7 +88,7 @@ class Cmapper:
 
 class _Cmapper():
     def __init__(
-        self, pdf: Pdf, pno: int, fonts: Object, font: str, cmap: str
+        self, pdf: PikepdfDocument, pno: int, fonts: Object, font: str, cmap: str
     ) -> None:
         self.pdf = pdf
         self.pno = pno
