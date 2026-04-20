@@ -1,0 +1,13 @@
+[
+  {
+    "model": "user.customuser",
+    "pk": 1,
+    "fields": {
+      "email": "test@example.com",
+      "password": "",
+      "created_at": "2026-04-16T00:00:00Z",
+      "last_login": "2026-04-16T00:00:00Z",
+      "pdf": null
+    }
+  }
+]

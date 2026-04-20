@@ -7,8 +7,6 @@ import pikepdf
 from pymupdf import Document as PymupdfDocument, Page as PymupdfPage
 from pikepdf import Pdf as PikepdfDocument, Page as PikepdfPage
 
-from pdf.helpers import uploaded_pdf_path
-
 
 TDocument = TypeVar("TDocument")
 TPage = TypeVar("TPage")
@@ -32,8 +30,7 @@ class BasePdfLib(Generic[TDocument, TPage], ABC):
 class PymupdfLib(BasePdfLib[PymupdfDocument, PymupdfPage]):
     def open(self, filename_or_stream: str | bytes, *args, **kwargs) -> PymupdfDocument:
         if isinstance(filename_or_stream, str):
-            filename = uploaded_pdf_path(filename_or_stream)
-            pdf = pymupdf.open(filename, *args, **kwargs)
+            pdf = pymupdf.open(filename_or_stream, *args, **kwargs)
         else:
             pdf = pymupdf.open(stream=filename_or_stream)
 
@@ -52,12 +49,7 @@ class PymupdfLib(BasePdfLib[PymupdfDocument, PymupdfPage]):
 
 class PikepdfLib(BasePdfLib[PikepdfDocument, PikepdfPage]):
     def open(self, filename_or_stream: str | bytes, *args, **kwargs) -> PikepdfDocument:
-        if isinstance(filename_or_stream, str):
-            filename = uploaded_pdf_path(filename_or_stream)
-            pdf = pikepdf.open(filename, *args, **kwargs)
-        else:
-            stream = filename_or_stream
-            pdf = pikepdf.open(stream, *args, **kwargs)
+        pdf = pikepdf.open(filename_or_stream, *args, **kwargs)
 
         self.pdf = pdf
         return pdf

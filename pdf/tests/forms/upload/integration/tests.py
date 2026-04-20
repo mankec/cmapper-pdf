@@ -6,9 +6,12 @@ from django.urls import reverse
 from pdf.constants import PDF_EXT
 from pdf.tests.helpers import create_pdf, remove_tmpdir
 from pdf.constants import DEFAULT_PNO
+from pdf.tests.helpers import get_test_user, stub_request_user
 
 
 class UploadPdfFormIntegrationTestCase(TestCase):
+    fixtures = ["users.json"]
+
     def setUp(self):
         self.client = Client()
 
@@ -16,14 +19,18 @@ class UploadPdfFormIntegrationTestCase(TestCase):
         remove_tmpdir()
 
     def test_upload_valid_pdf(self):
+        user = get_test_user()
+
         with tempfile.NamedTemporaryFile(suffix=f".{PDF_EXT}") as tmpfile:
             create_pdf(tmpfile.name)
 
             with open(tmpfile.name, "rb") as pdf:
                 url = reverse("pdf:upload")
                 redirect_url = reverse("pdf:page", kwargs={"pno": DEFAULT_PNO})
-                response = self.client.post(url, {"file": pdf})
-                self.assertRedirects(response, redirect_url)
+
+                with stub_request_user(user):
+                    response = self.client.post(url, {"file": pdf})
+                    self.assertRedirects(response, redirect_url)
 
     def test_upload_invalid_pdf(self):
         with tempfile.NamedTemporaryFile(suffix=f".{PDF_EXT}") as tmpfile:
