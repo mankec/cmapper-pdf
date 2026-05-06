@@ -18,7 +18,10 @@ def upload(request: HttpRequest) -> HttpResponseRedirect:
     if form.is_valid():
         file = request.FILES["file"]
         user = request.user
-        user.pdf = Pdf.objects.create(file=file)
+        pdf_obj = Pdf.objects.create(file=file)
+        user.pdf = pdf_obj
+        filename = uploaded_pdf_path(pdf_obj.file.name)
+        Cmapper(filename, DEFAULT_PNO).create_fonts(pdf_obj.id)
         user.save(update_fields=["pdf"])
         url = reverse("pdf:page", kwargs={"pno": DEFAULT_PNO})
         return redirect(url)
@@ -26,6 +29,9 @@ def upload(request: HttpRequest) -> HttpResponseRedirect:
 
 
 def page(request: HttpRequest, pno: int) -> HttpResponse:
+    # TODO: "some-word." breaks code, it's because of the dot at the end of the word. Look into it
+    # "ГРЧ.-лат." also breaks the code
+
     session = request.session
     pdf = request.user.pdf
 
@@ -36,11 +42,13 @@ def page(request: HttpRequest, pno: int) -> HttpResponse:
 
     current_pno = session.get("current_pno")
     word_blocks = session.get("word_blocks")
-    if pno != current_pno:
-        filename = os.path.join(MEDIA_ROOT, pdf.file.name)
-        word_blocks = Cmapper(filename, pno).get_word_blocks()
-        session["word_blocks"] = word_blocks
-        session["current_pno"] = pno
+    # if pno != current_pno:
+    filename = os.path.join(MEDIA_ROOT, pdf.file.name)
+    cmapper = Cmapper(filename, pno)
+    cmapper.replace_fonts_with_saved_fonts(pdf.id)
+    word_blocks = cmapper.get_word_blocks()
+    session["word_blocks"] = word_blocks
+    session["current_pno"] = pno
     ctx = {
         "pno": pno,
         "word_blocks": word_blocks,
@@ -58,7 +66,8 @@ def word(request: HttpRequest, pno: int, word: str) -> HttpResponse:
     session["word_font"] = font
     mapped_chars = session.get("mapped_chars")
     if not mapped_chars:
-        mapped_chars = Cmapper(uploaded_pdf_path(request.user.pdf.file.name), pno).extract_mapped_chars(word, font)
+        filename = uploaded_pdf_path(pdf.file.name)
+        mapped_chars = Cmapper(filename, pno).extract_mapped_chars(word, font)
         session["mapped_chars"] = mapped_chars
     ctx = {
         "pno": pno,
@@ -83,6 +92,7 @@ def remap(request: HttpRequest, pno: int, word: str) -> HttpResponseRedirect:
     filename = uploaded_pdf_path(pdf.file.name)
     cmapper = Cmapper(filename, pno)
     cmapper.remap(remap_chars, font)
+    cmapper.update_font(pdf.id, font)
     session["word_blocks"] = cmapper.get_word_blocks()
     pno = session["current_pno"]
     url = reverse("pdf:page", kwargs={"pno": pno})

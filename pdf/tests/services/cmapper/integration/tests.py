@@ -5,10 +5,11 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.files import File
 
-from pdf.tests.helpers import remove_tmpdir, PDF_SAMPLE_JIBBERISH_ON_READ, get_test_user
+from pdf.helpers import uploaded_pdf_path
 from pdf.constants import DEFAULT_PNO, TEXT_FORMAT_DICT
 from pdf.models import Pdf
-from pdf.tests.helpers import upload_pdf, create_pdf, write_pdf, stub_request_user
+from pdf.tests.helpers import remove_tmpdir, PDF_SAMPLE_JIBBERISH_ON_READ, get_test_user, upload_pdf, create_pdf, write_pdf, stub_request_user
+from pdf.services import Cmapper
 
 
 class CmapperIntegrationTestCase(TestCase):
@@ -23,6 +24,9 @@ class CmapperIntegrationTestCase(TestCase):
         self.user = get_test_user()
         self.user.pdf = pdf
         self.user.save()
+        filename = uploaded_pdf_path(pdf.file.name)
+        cmapper = Cmapper(filename, DEFAULT_PNO)
+        cmapper.create_fonts(pdf.id)
 
     def tearDown(self):
         remove_tmpdir()
