@@ -4,12 +4,14 @@ import re
 import math
 from concurrent.futures import ProcessPoolExecutor
 
+import pymupdf
 from pikepdf import Pdf as PikepdfDocument, Object
 
 from pdf.helpers import to_char, to_unicode, chunked_list
 from pdf.factories import PdfLib, PdfLibFactory
-from pdf.libs import PikepdfLib
+from pdf.libs import PymupdfLib, PikepdfLib
 from pdf.helpers import get_page_text
+from pdf.constants import SOFT_HYPHEN_HEX_ESCAPE
 
 
 class Cmapper:
@@ -20,6 +22,47 @@ class Cmapper:
         pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
         self.pdf = pdflib.open(self.filename_or_stream, allow_overwriting_input=True)
         self.page = pdflib.get_page(self.pno)
+
+    def get_word_blocks(self) -> list[list[dict[str, str]]]:
+        pdflib: PymupdfLib = PdfLibFactory(PdfLib.PYMUPDF)
+        pdflib.open(self.filename_or_stream)
+        page = pdflib.get_page(self.pno)
+        exclude_images = pymupdf.TEXTFLAGS_DICT & ~pymupdf.TEXT_PRESERVE_IMAGES
+        page_text = page.get_text("dict", flags=exclude_images)
+
+        blocks = []
+
+        for block in page_text["blocks"]:
+            block_list = []
+
+            for line in block["lines"]:
+                for span in line["spans"]:
+                    text = span["text"].split(" ")
+
+                    for word in text:
+                        if not word:
+                            continue
+
+                        if block_list:
+                            last_word = block_list[-1]
+                            value = last_word["value"]
+
+                            if value.endswith(SOFT_HYPHEN_HEX_ESCAPE):
+                                # This happens when there's a line break in original PDF
+                                # TODO: See if \n can be omitted
+                                last_word["value"] = value + "\n" + word
+                                continue
+
+                            if word == ".":
+                                # Avoid remapping dots
+                                last_word["value"] = value + word
+                                continue
+
+                        block_list.append({"value": word, "font": span["font"]})
+
+            blocks.append(block_list)
+
+        return blocks
 
     def extract_mapped_chars(
         self, word: str, font_name: str | None

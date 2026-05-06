@@ -7,7 +7,6 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from pdf.forms.upload.form import UploadPdfForm
 from pdf.services import Cmapper
 from pdf.constants import DEFAULT_PNO
-from pdf.helpers import get_word_blocks
 from pdf.models import Pdf
 from pdf.helpers import uploaded_pdf_path
 from project.settings import MEDIA_ROOT
@@ -39,7 +38,7 @@ def page(request: HttpRequest, pno: int) -> HttpResponse:
     word_blocks = session.get("word_blocks")
     if pno != current_pno:
         filename = os.path.join(MEDIA_ROOT, pdf.file.name)
-        word_blocks = get_word_blocks(filename, pno)
+        word_blocks = Cmapper(filename, pno).get_word_blocks()
         session["word_blocks"] = word_blocks
         session["current_pno"] = pno
     ctx = {
@@ -81,8 +80,10 @@ def remap(request: HttpRequest, pno: int, word: str) -> HttpResponseRedirect:
         k: v for k, v in request.POST.items()
         if k != "csrfmiddlewaretoken"
     }
-    Cmapper(uploaded_pdf_path(pdf.file.name), pno).remap(remap_chars, font)
-    session["word_blocks"] = get_word_blocks(uploaded_pdf_path(pdf.file.name), pno)
+    filename = uploaded_pdf_path(pdf.file.name)
+    cmapper = Cmapper(filename, pno)
+    cmapper.remap(remap_chars, font)
+    session["word_blocks"] = cmapper.get_word_blocks()
     pno = session["current_pno"]
     url = reverse("pdf:page", kwargs={"pno": pno})
     return redirect(url)
