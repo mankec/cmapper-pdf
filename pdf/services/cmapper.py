@@ -58,6 +58,10 @@ class Cmapper:
                                 last_word["value"] = value + word
                                 continue
 
+                            if word == "/":
+                                # This breaks Django's routing
+                                continue
+
                         block_list.append({"value": word, "font": span["font"]})
 
             blocks.append(block_list)
