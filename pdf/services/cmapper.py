@@ -93,6 +93,7 @@ class Cmapper:
 
         idx = 0
         word_list = list(word)
+        word = word.rstrip(".")
         mapped_chars_list = []
         while idx < len(word):
             chars = multiple_chars.get(idx)
