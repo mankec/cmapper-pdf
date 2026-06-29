@@ -10,7 +10,7 @@ from pikepdf import Pdf as PikepdfDocument, Object
 from pdf.helpers import to_char, to_unicode, chunked_list
 from pdf.factories import PdfLib, PdfLibFactory
 from pdf.libs import PymupdfLib, PikepdfLib
-from pdf.helpers import get_page_text
+from pdf.helpers import get_page_text, uploaded_pdf_path
 from pdf.constants import SOFT_HYPHEN_HEX_ESCAPE
 
 
@@ -22,6 +22,74 @@ class Cmapper:
         pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
         self.pdf = pdflib.open(self.filename_or_stream, allow_overwriting_input=True)
         self.page = pdflib.get_page(self.pno)
+
+    def create_fonts(self, pdf_id: int) -> None:
+        from pdf.models import Pdf, Font
+
+        pdf_obj = Pdf.objects.get(id=pdf_id)
+
+        pdflib: PikepdfLib = PdfLibFactory(PdfLib.PIKEPDF)
+        pdflib.open(self.filename_or_stream)
+        page = pdflib.get_page(self.pno)
+        fonts = page.Resources.get("/Font")
+
+        if not fonts:
+            return
+
+        for font_name in fonts:
+            # TODO: Make this more clear. One is font name e.g. Fd6342423 other is something else and looks like this C0_4
+            cmap = self._get_cmap(fonts, font_name)
+            cmap_name = Font.get_cmap_name(cmap)
+
+            Font.objects.create(
+                name=font_name,
+                cmap=cmap,
+                cmap_name=cmap_name,
+                pdf=pdf_obj
+            )
+
+    def update_font(self, pdf_id: int, font_name: str) -> None:
+        from pdf.models import Pdf, Font
+
+        pdf_obj = Pdf.objects.get(id=pdf_id)
+        fonts = self.page.Resources.Font
+
+        font = self._get_font(fonts, font_name)
+        cmap = self._get_cmap(fonts, font)
+        if not cmap:
+            return
+
+        cmap_name = Font.get_cmap_name(cmap)
+        font_obj = Font.objects.get(cmap_name=cmap_name, pdf=pdf_obj)
+        font_obj.cmap = cmap
+        font_obj.save(update_fields=["cmap"])
+
+    def replace_fonts_with_saved_fonts(self, pdf_id: int) -> None:
+        from pdf.models import Pdf, Font
+
+        fonts = self.page.Resources.Font
+        pdf_obj = Pdf.objects.get(id=pdf_id)
+
+        for font_name in fonts.keys():
+            cmap = self._get_cmap(fonts, font_name)
+            if not cmap:
+                continue
+            cmap_name = Font.get_cmap_name(cmap)
+            try:
+                font_obj = Font.objects.get(cmap_name=cmap_name, pdf=pdf_obj)
+            except Font.DoesNotExist:
+                Font.objects.create(
+                    name=font_name,
+                    cmap=cmap,
+                    cmap_name=cmap_name,
+                    pdf=pdf_obj
+                )
+                continue
+            data = font_obj.cmap.encode()
+            stream = self.pdf.make_stream(data)
+            fonts[font_name].ToUnicode = stream
+            filename = uploaded_pdf_path(pdf_obj.file.name)
+            self.pdf.save(filename, linearize=False)
 
     def get_word_blocks(self) -> list[list[dict[str, str]]]:
         pdflib: PymupdfLib = PdfLibFactory(PdfLib.PYMUPDF)
@@ -50,7 +118,7 @@ class Cmapper:
                             if value.endswith(SOFT_HYPHEN_HEX_ESCAPE):
                                 # This happens when there's a line break in original PDF
                                 # TODO: See if \n can be omitted
-                                last_word["value"] = value + "\n" + word
+                                last_word["value"] = value + word
                                 continue
 
                             if word == ".":
@@ -71,16 +139,10 @@ class Cmapper:
     def extract_mapped_chars(
         self, word: str, font_name: str | None
     ) -> list[dict[str, str]]:
+        mapped_chars_dict = {}
         fonts = self.page.Resources.Font
         font = self._get_font(fonts, font_name)
-        font_stream = fonts[font].get("/ToUnicode")
-        if not font_stream:
-            return
-
-        mapped_chars_dict = {}
-
-        data = font_stream.read_bytes()
-        cmap = data.decode()
+        cmap = self._get_cmap(fonts, font)
         extracted = _Extractor(self.pdf, self.pno, fonts, font, cmap).extract(word)
         if extracted:
             mapped_chars_dict |= extracted
@@ -92,6 +154,7 @@ class Cmapper:
                 multiple_chars[start_idx] = char
 
         idx = 0
+        word = word.rstrip(".")
         word_list = list(word)
         word = word.rstrip(".")
         mapped_chars_list = []
@@ -117,6 +180,9 @@ class Cmapper:
         fonts = self.page.Resources.Font
         font = self._get_font(fonts, font_name)
         font_stream = fonts[font].get("/ToUnicode")
+        if not font_stream:
+            return
+
         data = font_stream.read_bytes()
         cmap = data.decode()
 
@@ -132,6 +198,14 @@ class Cmapper:
         if not font:
             raise f"Font({font_name}) must exist"
         return font
+
+    def _get_cmap(self, fonts: Object, font: str) -> str:
+        font_stream = fonts[font].get("/ToUnicode")
+        if not font_stream:
+            return
+
+        data = font_stream.read_bytes()
+        return data.decode()
 
 
 class _Cmapper():
